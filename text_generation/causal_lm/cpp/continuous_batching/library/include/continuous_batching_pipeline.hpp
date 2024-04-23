@@ -8,9 +8,10 @@
 #include "scheduler_config.hpp"
 #include "tokenizer.hpp"
 #include "generation_config.hpp"
+#include "generation_handle.hpp"
 
 struct GenerationResult {
-    // request ID
+    // request ID - obsolete when handle API is approved as handle will connect results with prompts.
     uint64_t m_request_id;
 
     // in a generic case we have multiple generation results per initial prompt
@@ -32,7 +33,7 @@ public:
 
     GenerationConfig get_config() const;
 
-    void add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params);
+    GenerationHandle add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params);
 
     std::vector<GenerationResult> step();
 
@@ -40,4 +41,6 @@ public:
 
     // more high level interface, which can process multiple prompts in continuous batching manner
     std::vector<GenerationResult> generate(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params);
+    // more high level interface, which can process multiple prompts in continuous batching manner
+    std::vector<GenerationResult> generate2(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params);
 };

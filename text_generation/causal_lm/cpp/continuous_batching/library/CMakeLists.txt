@@ -32,6 +32,7 @@ set(TARGET_NAME openvino_continuous_batching)
 add_library(${TARGET_NAME} STATIC
     src/tokenizer.cpp
     src/generation_config.cpp
+    src/generation_handle.cpp
     src/continuous_batching_pipeline.cpp
     src/paged_attention_transformations.cpp)
 

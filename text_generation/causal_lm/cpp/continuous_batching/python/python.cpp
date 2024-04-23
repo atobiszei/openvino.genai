@@ -100,7 +100,8 @@ PYBIND11_MODULE(py_continuous_batching, m) {
         .def("add_request", &ContinuousBatchingPipeline::add_request)
         .def("step", &ContinuousBatchingPipeline::step)
         .def("has_running_requests", &ContinuousBatchingPipeline::has_running_requests)
-        .def("generate", &ContinuousBatchingPipeline::generate);
+        .def("generate", &ContinuousBatchingPipeline::generate)
+        .def("generate2", &ContinuousBatchingPipeline::generate2);
 
     py::class_<Tokenizer, std::shared_ptr<Tokenizer>>(m, "Tokenizer")
         .def(py::init<const std::string&>())
