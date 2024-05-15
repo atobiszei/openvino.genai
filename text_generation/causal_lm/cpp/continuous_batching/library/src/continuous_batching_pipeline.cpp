@@ -13,34 +13,6 @@
 
 #include "debug_utils.hpp"
 
-namespace {
-
-GenerationResult from_sequence_group(std::shared_ptr<Tokenizer> tokenizer, SequenceGroup::CPtr sequence_group) {
-    GenerationResult result;
-    result.m_request_id = sequence_group->get_request_id();
-
-    std::vector<Sequence::CPtr> finished_sequences = sequence_group->get_finished_sequences();
-
-    OPENVINO_ASSERT(finished_sequences.size() == sequence_group->num_total_seqs() && sequence_group->has_finished());
-    for (size_t sequence_id = 0; sequence_id < finished_sequences.size(); ++sequence_id) {
-        Sequence::CPtr sequence = finished_sequences[sequence_id];
-
-        result.m_scores.push_back(sequence->get_beam_search_score(sequence_group->get_sampling_parameters()));
-
-        {
-            static ManualTimer timer("detokenize");
-            timer.start();
-            std::string output_text = tokenizer->decode(sequence->get_generated_ids());
-            timer.end();
-            result.m_generation_ids.push_back(output_text);
-        }
-    }
-
-    return result;
-}
-
-} // namespace
-
 void apply_paged_attention_transformations(std::shared_ptr<ov::Model> model, DeviceConfig& device_config);
 
 class ContinuousBatchingPipeline::Impl {
@@ -150,7 +122,7 @@ public:
         m_awaiting_requests.clear();
     }
 
-    std::vector<GenerationResult> step() {
+    void step() {
         static ManualTimer step_timer("step()");
         step_timer.start();
 
@@ -213,7 +185,6 @@ public:
 
         // perform post-processing of current step
 
-        std::vector<GenerationResult> currently_finished_requests;
         {
             static ManualTimer timer("create finished results");
             timer.start();
@@ -223,7 +194,6 @@ public:
                 SequenceGroup::Ptr sequence_group = m_requests[seq_group_id];
                 sequence_group->notify_handle();
                 if (sequence_group->has_finished()) {
-                   currently_finished_requests.push_back(from_sequence_group(m_tokenizer, sequence_group));
                    sequence_group->finish_generation_stream();
                 }
             }
@@ -234,7 +204,6 @@ public:
         }
 
         step_timer.end();
-        return currently_finished_requests;
     }
 
     bool has_running_requests() const {
@@ -247,31 +216,6 @@ public:
     }
 
     std::vector<GenerationResult> generate(const std::vector<std::string> prompts, std::vector<GenerationConfig> sampling_params) {
-        OPENVINO_ASSERT(!has_running_requests(), "Generate cannot be called while ContinuousBatchingPipeline is already in running state. Use ContinuousBatchingPipeline::add_request");
-        OPENVINO_ASSERT(prompts.size() == sampling_params.size());
-
-        for (size_t request_id = 0; request_id < prompts.size(); ++request_id) {
-            add_request(request_id, prompts[request_id], sampling_params[request_id]);
-        }
-
-        std::vector<GenerationResult> results;
-        results.reserve(m_awaiting_requests.size());
-
-        while (has_running_requests() || has_awaiting_requests()) {
-            std::vector<GenerationResult> partial_results = step();
-            results.insert(results.end(), partial_results.begin(), partial_results.end());
-        }
-
-        // sort results according to request_id to return results in order of initial prompts
-        std::sort(results.begin(), results.end(), [] (const GenerationResult& r1, const GenerationResult& r2) -> bool {
-            return r1.m_request_id < r2.m_request_id;
-        });
-
-        OPENVINO_ASSERT(results.size() == prompts.size());
-        return results;
-    }
-
-    std::vector<GenerationResult> generate2(const std::vector<std::string> prompts, std::vector<GenerationConfig> sampling_params) {
         OPENVINO_ASSERT(!has_running_requests(), "Generate cannot be called while ContinuousBatchingPipeline is already in running state. Use ContinuousBatchingPipeline::add_request");
         OPENVINO_ASSERT(prompts.size() == sampling_params.size());
 
@@ -326,8 +270,8 @@ GenerationHandle ContinuousBatchingPipeline::add_request(uint64_t request_id, st
     return m_impl->add_request(request_id, prompt, sampling_params);
 }
 
-std::vector<GenerationResult> ContinuousBatchingPipeline::step() {
-     return m_impl->step();
+void ContinuousBatchingPipeline::step() {
+    m_impl->step();
 }
 
 bool ContinuousBatchingPipeline::has_running_requests() const {
@@ -336,9 +280,4 @@ bool ContinuousBatchingPipeline::has_running_requests() const {
 
 std::vector<GenerationResult> ContinuousBatchingPipeline::generate(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params) {
     return m_impl->generate(prompts, sampling_params);
-}
-
-
-std::vector<GenerationResult> ContinuousBatchingPipeline::generate2(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params) {
-    return m_impl->generate2(prompts, sampling_params);
 }

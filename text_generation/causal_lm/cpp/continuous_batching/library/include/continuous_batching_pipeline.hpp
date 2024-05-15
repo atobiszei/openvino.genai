@@ -35,12 +35,10 @@ public:
 
     GenerationHandle add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params);
 
-    std::vector<GenerationResult> step();
+    void step();
 
     bool has_running_requests() const;
 
     // more high level interface, which can process multiple prompts in continuous batching manner
     std::vector<GenerationResult> generate(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params);
-    // more high level interface, which can process multiple prompts in continuous batching manner
-    std::vector<GenerationResult> generate2(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params);
 };
