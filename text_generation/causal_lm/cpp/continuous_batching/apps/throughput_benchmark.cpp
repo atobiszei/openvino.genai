@@ -338,10 +338,7 @@ void llmEngineLoop(ContinuousBatchingPipeline* pipe, Dataset* dataset) {
 
     while (num_finished < dataset->size()) {
         for (; pipe->has_running_requests(); ) {
-            std::vector<GenerationResult> results = pipe->step();
-            if (!results.empty()) {
-                std::cout << "Finished: " << (num_finished += results.size()) << std::endl;
-            }
+            pipe->step();
         }
     }
     std::cout << "All requests processed, LLM Engine loop escaped. Exiting thread." << std::endl;
