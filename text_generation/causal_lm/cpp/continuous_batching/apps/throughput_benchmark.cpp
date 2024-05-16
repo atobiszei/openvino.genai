@@ -337,7 +337,7 @@ void llmEngineLoop(ContinuousBatchingPipeline* pipe, Dataset* dataset) {
     size_t num_finished = 0;
 
     while (num_finished < dataset->size()) {
-        for (; pipe->has_running_requests(); ) {
+        while (pipe->has_running_requests() || pipe->has_awaiting_requests()) {
             pipe->step();
         }
     }

@@ -39,6 +39,8 @@ public:
 
     bool has_running_requests() const;
 
+    bool has_awaiting_requests() const;
+
     // more high level interface, which can process multiple prompts in continuous batching manner
     std::vector<GenerationResult> generate(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params);
 };

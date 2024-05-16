@@ -278,6 +278,10 @@ bool ContinuousBatchingPipeline::has_running_requests() const {
     return m_impl->has_running_requests();
 }
 
+bool ContinuousBatchingPipeline::has_awaiting_requests() const {
+    return m_impl->has_awaiting_requests();
+}
+
 std::vector<GenerationResult> ContinuousBatchingPipeline::generate(const std::vector<std::string>& prompts, std::vector<GenerationConfig> sampling_params) {
     return m_impl->generate(prompts, sampling_params);
 }
