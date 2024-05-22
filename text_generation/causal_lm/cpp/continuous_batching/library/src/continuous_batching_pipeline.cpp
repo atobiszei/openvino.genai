@@ -3,6 +3,9 @@
 
 #include <mutex>
 
+#include <jinja2cpp/template.h>
+#include <jinja2cpp/template_env.h>
+
 #include "continuous_batching_pipeline.hpp"
 #include "cache_manager.hpp"
 #include "sampler.hpp"
@@ -14,6 +17,20 @@
 #include "debug_utils.hpp"
 
 void apply_paged_attention_transformations(std::shared_ptr<ov::Model> model, DeviceConfig& device_config);
+
+// TODO this needs to be changed - for add_request we need customized template + tokenizer config and list of messages
+struct TokenizerConfig {
+	std::string chat_template{"{{ bos_token }}{% for message in messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if message['role'] == 'user' %}{{ '[INST] ' + message['content'] + ' [/INST]' }}{% elif message['role'] == 'assistant' %}{{ message['content'] + eos_token + ' ' }}{% else %}{{ raise_exception('Only user and assistant roles are supported!') }}{% endif %}{% endfor %}"};
+	std::string bos_token{"<s>"};
+	std::string eos_token{"</s>"};
+	void mistral7b() {
+// https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1/blob/main/tokenizer_config.json#L32
+            this->chat_template = "{{ bos_token }}{% for message in messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if message['role'] == 'user' %}{{ '[INST] ' + message['content'] + ' [/INST]' }}{% elif message['role'] == 'assistant' %}{{ message['content'] + eos_token + ' ' }}{% else %}{{ raise_exception('Only user and assistant roles are supported!') }}{% endif %}{% endfor %}";
+	    this->bos_token = "<s>";
+	    this->eos_token = "</s>";
+
+}
+};
 
 class ContinuousBatchingPipeline::Impl {
     std::shared_ptr<Tokenizer> m_tokenizer;
@@ -90,6 +107,26 @@ public:
         return m_tokenizer;
     }
 
+    GenerationHandle add_request(uint64_t request_id, chat_t chat, GenerationConfig sampling_params) {
+        jinja2::TemplateEnv env;
+        env.GetSettings().lstripBlocks = true;
+        env.GetSettings().trimBlocks = true;
+        jinja2::Template tpl(&env);
+        // TODO where get chat template
+        TokenizerConfig tokenizer_config;
+        tpl.Load(tokenizer_config.chat_template);
+	auto role = chat[0]["role"];
+	auto prompt = chat[0]["content"];
+        jinja2::ValuesMap message {{"role", role}, {"content", prompt}};
+        jinja2::ValuesMap params = {
+            {"messages", jinja2::ValuesList({message})},
+            {"bos_token",  tokenizer_config.bos_token},
+            {"eos_token", tokenizer_config.eos_token},
+            {"add_generation_prompt", true},
+        };
+
+        return this->add_request(request_id, tpl.RenderAsString(params).value(), sampling_params);
+    }
     GenerationHandle add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params) {
         if (sampling_params.eos_token_id < 0) {
             sampling_params.eos_token_id = m_tokenizer->get_eos_token_id();
