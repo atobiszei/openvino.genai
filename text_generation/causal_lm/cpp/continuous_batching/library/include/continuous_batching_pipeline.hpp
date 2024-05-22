@@ -21,6 +21,8 @@ struct GenerationResult {
     std::vector<float> m_scores;
 };
 
+using chat_t = std::vector<std::unordered_map<std::string, std::string>>;
+
 class ContinuousBatchingPipeline {
     class Impl;
     std::shared_ptr<Impl> m_impl;
@@ -33,6 +35,7 @@ public:
 
     GenerationConfig get_config() const;
 
+    GenerationHandle add_request(uint64_t request_id, chat_t chat, GenerationConfig sampling_params);
     GenerationHandle add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params);
 
     void step();
