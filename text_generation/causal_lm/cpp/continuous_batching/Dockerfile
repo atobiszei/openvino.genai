@@ -15,7 +15,7 @@ RUN /workspace/openvino/install_build_dependencies.sh
 RUN python3 -m pip install -r /workspace/openvino/src/bindings/python/wheel/requirements-dev.txt
 RUN cmake -DENABLE_PYTHON=ON -DENABLE_PYTHON_PACKAGING=ON -DENABLE_WHEEL=ON -DENABLE_CPPLINT=OFF -DENABLE_SAMPLES=OFF -DENABLE_INTEL_GPU=OFF \
         -DENABLE_INTEL_NPU=OFF -DENABLE_TEMPLATE=OFF -DENABLE_AUTO=OFF -DENABLE_HETERO=OFF -DENABLE_AUTO_BATCH=OFF -DENABLE_OV_TF_FRONTEND=ON -DENABLE_OV_ONNX_FRONTEND=OFF \
-        -DENABLE_OV_TF_LITE_FRONTEND=OFF -DENABLE_OV_PADDLE_FRONTEND=OFF -S /workspace/openvino -B /workspace/openvino_build
+        -DENABLE_OV_TF_LITE_FRONTEND=OFF -DENABLE_OV_PADDLE_FRONTEND=OFF -DENABLE_SYSTEM_TBB=ON -S /workspace/openvino -B /workspace/openvino_build
 RUN cmake --build /workspace/openvino_build --parallel $JOBS
 RUN cmake -P /workspace/openvino_build/cmake_install.cmake
 RUN python3 -m pip install /workspace/openvino_build/wheels/openvino-2024* 
@@ -32,3 +32,4 @@ RUN git clone --branch request_rate https://github.com/mzegla/openvino.genai.git
 RUN python3 -m pip install --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly/ /workspace/openvino.genai/thirdparty/openvino_tokenizers
 RUN PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" python3 -m pip install -r /workspace/openvino.genai/text_generation/causal_lm/cpp/continuous_batching/python/tests/requirements.txt
 ENV PYTHONPATH=/workspace/openvino.genai/text_generation/causal_lm/cpp/continuous_batching/build/python
+RUN pip install --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly/ nncf
