@@ -108,6 +108,15 @@ public:
     }
 
     GenerationHandle add_request(uint64_t request_id, chat_t chat, GenerationConfig sampling_params) {
+	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+        size_t m_id = 0;
+	for (auto& m : chat) {
+            std::cout << "message id:" << m_id++ << std::endl;
+            for (auto& [k, v] : m) {
+                std::cout << k << ":" << v<< std::endl;
+            }
+	}
+	
         jinja2::TemplateEnv env;
         env.GetSettings().lstripBlocks = true;
         env.GetSettings().trimBlocks = true;
@@ -115,11 +124,15 @@ public:
         // TODO where get chat template
         TokenizerConfig tokenizer_config;
         tpl.Load(tokenizer_config.chat_template);
-	auto role = chat[0]["role"];
-	auto prompt = chat[0]["content"];
-        jinja2::ValuesMap message {{"role", role}, {"content", prompt}};
+	jinja2::ValuesList valuesList;
+	for (auto& m : chat) {
+            std::string role = m["role"];
+            std::string prompt = m["content"];
+            jinja2::ValuesMap message {{"role", role}, {"content", prompt}};
+		valuesList.emplace_back(message);
+	}
         jinja2::ValuesMap params = {
-            {"messages", jinja2::ValuesList({message})},
+            {"messages", valuesList},
             {"bos_token",  tokenizer_config.bos_token},
             {"eos_token", tokenizer_config.eos_token},
             {"add_generation_prompt", true},
@@ -128,6 +141,9 @@ public:
         return this->add_request(request_id, tpl.RenderAsString(params).value(), sampling_params);
     }
     GenerationHandle add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params) {
+	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+	std::cout << "Got prompt:" << prompt << std::endl;
+        std::cout << __FILE__ << ":" << __LINE__ << std::endl;
         if (sampling_params.eos_token_id < 0) {
             sampling_params.eos_token_id = m_tokenizer->get_eos_token_id();
         } else {
@@ -305,6 +321,9 @@ GenerationConfig ContinuousBatchingPipeline::get_config() const{
 
 GenerationHandle ContinuousBatchingPipeline::add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params) {
     return m_impl->add_request(request_id, prompt, sampling_params);
+}
+GenerationHandle ContinuousBatchingPipeline::add_request(uint64_t request_id, chat_t chat, GenerationConfig sampling_params) {
+    return m_impl->add_request(request_id, chat, sampling_params);
 }
 
 void ContinuousBatchingPipeline::step() {
