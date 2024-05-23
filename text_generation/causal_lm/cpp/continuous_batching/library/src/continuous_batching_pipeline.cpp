@@ -18,20 +18,6 @@
 
 void apply_paged_attention_transformations(std::shared_ptr<ov::Model> model, DeviceConfig& device_config);
 
-// TODO this needs to be changed - for add_request we need customized template + tokenizer config and list of messages
-struct TokenizerConfig {
-	std::string chat_template{"{{ bos_token }}{% for message in messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if message['role'] == 'user' %}{{ '[INST] ' + message['content'] + ' [/INST]' }}{% elif message['role'] == 'assistant' %}{{ message['content'] + eos_token + ' ' }}{% else %}{{ raise_exception('Only user and assistant roles are supported!') }}{% endif %}{% endfor %}"};
-	std::string bos_token{"<s>"};
-	std::string eos_token{"</s>"};
-	void mistral7b() {
-// https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1/blob/main/tokenizer_config.json#L32
-            this->chat_template = "{{ bos_token }}{% for message in messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if message['role'] == 'user' %}{{ '[INST] ' + message['content'] + ' [/INST]' }}{% elif message['role'] == 'assistant' %}{{ message['content'] + eos_token + ' ' }}{% else %}{{ raise_exception('Only user and assistant roles are supported!') }}{% endif %}{% endfor %}";
-	    this->bos_token = "<s>";
-	    this->eos_token = "</s>";
-
-}
-};
-
 class ContinuousBatchingPipeline::Impl {
     std::shared_ptr<Tokenizer> m_tokenizer;
     std::shared_ptr<Scheduler> m_scheduler;
@@ -122,10 +108,9 @@ public:
         env.GetSettings().lstripBlocks = true;
         env.GetSettings().trimBlocks = true;
         jinja2::Template tpl(&env);
-        // TODO where get chat template
-        TokenizerConfig tokenizer_config;
+	const TokenizerConfig& tokenizer_config = this->m_tokenizer->get_config();
         tpl.Load(tokenizer_config.chat_template);
-	jinja2::ValuesList valuesList;
+        jinja2::ValuesList valuesList;
 	for (auto& m : chat) {
             std::string role = m["role"];
             std::string prompt = m["content"];
