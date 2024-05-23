@@ -1,7 +1,9 @@
 
 // Copyright (C) 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#include <fstream>
 
+#include "nlohmann/json.hpp"
 #include "openvino/runtime/core.hpp"
 
 #include "tokenizer.hpp"
@@ -10,6 +12,7 @@ class Tokenizer::Impl {
     const size_t TOKENIZER_BATCH_SIZE = 1;
     ov::CompiledModel m_tokenizer, m_detokenizer;
     std::size_t m_eos_token_id;
+    TokenizerConfig config;
 
 public:
     explicit Impl(const std::string& models_path) {
@@ -26,6 +29,21 @@ public:
             tokenizer_model, "CPU");
         m_detokenizer = core.compile_model(
             models_path + "/openvino_detokenizer.xml", "CPU");
+	// TODO path handling
+	// TODO error handling
+        std::string tokenizerConfigPath = models_path + "/tokenizer_config.json";
+        std::cout << "Tokenizer config json path:" << tokenizerConfigPath << std::endl;
+        std::cout << "Tokenizer model xml path:" << (models_path + "/openvino_tokenizer.xml") << std::endl;
+        std::ifstream f(models_path + "/tokenizer_config.json");
+        nlohmann::json json_data = nlohmann::json::parse(f);
+
+	this->config.bos_token = json_data.value("bos_token", "");
+	this->config.eos_token = json_data.value("eos_token", "");
+	this->config.chat_template = json_data.value("chat_template", "");
+    }
+
+    const TokenizerConfig& get_config() const {
+	return this->config;
     }
 
     ov::Tensor encode(std::string prompt) {
@@ -49,6 +67,10 @@ public:
 
 Tokenizer::Tokenizer(const std::string& models_path) {
     m_impl = std::make_shared<Impl>(models_path);
+}
+
+const TokenizerConfig& Tokenizer::get_config() const {
+    return this->m_impl->get_config();
 }
 
 ov::Tensor Tokenizer::encode(std::string prompt) {

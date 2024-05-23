@@ -10,6 +10,12 @@
 
 #include "openvino/runtime/tensor.hpp"
 
+struct TokenizerConfig {
+	std::string chat_template;
+	std::string bos_token;
+	std::string eos_token;
+};
+
 class Tokenizer {
     class Impl;
     std::shared_ptr<Impl> m_impl;
@@ -22,6 +28,7 @@ public:
     ov::Tensor encode(std::string prompt);
 
     std::string decode(std::vector<int64_t> tokens);
+    const TokenizerConfig& get_config() const;
 
     size_t get_eos_token_id() const;
 };
