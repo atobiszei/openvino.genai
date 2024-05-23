@@ -45,8 +45,8 @@ set_target_properties(${TARGET_NAME} PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQ
 
 function(ov_genai_build_jinja2cpp)
     FetchContent_Declare(jinja2cpp
-        URL https://github.com/ilya-lavrenov/Jinja2Cpp/archive/a5d002cbf44469775556daea14ba3ccdba1e365a.tar.gz
-        URL_HASH SHA256=5aa5378d9acf3c44dfb607fd7f16f48b17ffa6495c219957901e9191ffe28900)
+        URL https://github.com/jinja2cpp/Jinja2Cpp/archive/a853f8e9f784de53b11973a47af0b20b0167f6f3.tar.gz 
+        URL_HASH SHA256=62b84663b5a6bc18622fbd1036e0e8f11a06e017c6065593122ca4707a91f1dc)
 
     FetchContent_GetProperties(jinja2cpp)
     if(NOT jinja2cpp_POPULATED)
