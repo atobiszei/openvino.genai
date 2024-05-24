@@ -29,7 +29,6 @@ RUN git clone --branch request_rate https://github.com/mzegla/openvino.genai.git
         git submodule update --remote --init && cmake -DCMAKE_BUILD_TYPE=Release -S ./ -B ./build/ && cmake --build ./build/ -j $JOBS
 
 # Install test dependencies
-RUN python3 -m pip install --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly/ /workspace/openvino.genai/thirdparty/openvino_tokenizers
+RUN python3 -m pip install --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly/ --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly/ nncf /workspace/openvino.genai/thirdparty/openvino_tokenizers
 RUN PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" python3 -m pip install -r /workspace/openvino.genai/text_generation/causal_lm/cpp/continuous_batching/python/tests/requirements.txt
 ENV PYTHONPATH=/workspace/openvino.genai/text_generation/causal_lm/cpp/continuous_batching/build/python
-RUN pip install --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly/ nncf
