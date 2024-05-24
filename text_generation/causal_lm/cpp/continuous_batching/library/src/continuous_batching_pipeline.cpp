@@ -24,6 +24,8 @@ class ContinuousBatchingPipeline::Impl {
     std::shared_ptr<CacheManager> m_cache_manager;
     std::shared_ptr<ModelRunner> m_model_runner;
     std::shared_ptr<Sampler> m_sampler;
+    std::unique_ptr<jinja2::TemplateEnv> template_env;
+    std::unique_ptr<jinja2::Template> chat_template;
 
     GenerationConfig m_generation_config;
 
@@ -83,6 +85,14 @@ public:
         m_sampler = std::make_shared<Sampler>();
         m_sampler->set_seed(m_generation_config.rng_seed);
 
+	// prepare chat template
+        this->template_env = std::make_unique<jinja2::TemplateEnv>();
+        this->template_env->GetSettings().lstripBlocks = true;
+        this->template_env->GetSettings().trimBlocks = true;
+        this->chat_template = std::make_unique<jinja2::Template>(this->template_env.get());
+        const TokenizerConfig& tokenizer_config = this->m_tokenizer->get_config();
+        this->chat_template->Load(tokenizer_config.chat_template);
+
         // read default generation config
     }
 
@@ -95,21 +105,7 @@ public:
     }
 
     GenerationHandle add_request(uint64_t request_id, chat_t chat, GenerationConfig sampling_params) {
-	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-        size_t m_id = 0;
-	for (auto& m : chat) {
-            std::cout << "message id:" << m_id++ << std::endl;
-            for (auto& [k, v] : m) {
-                std::cout << k << ":" << v<< std::endl;
-            }
-	}
-	
-        jinja2::TemplateEnv env;
-        env.GetSettings().lstripBlocks = true;
-        env.GetSettings().trimBlocks = true;
-        jinja2::Template tpl(&env);
-	const TokenizerConfig& tokenizer_config = this->m_tokenizer->get_config();
-        tpl.Load(tokenizer_config.chat_template);
+	// TODO replace with string view with new c++
         jinja2::ValuesList valuesList;
 	for (auto& m : chat) {
             std::string role = m["role"];
@@ -117,19 +113,17 @@ public:
             jinja2::ValuesMap message {{"role", role}, {"content", prompt}};
 		valuesList.emplace_back(message);
 	}
+        const TokenizerConfig& tokenizer_config = this->m_tokenizer->get_config();
         jinja2::ValuesMap params = {
             {"messages", valuesList},
             {"bos_token",  tokenizer_config.bos_token},
             {"eos_token", tokenizer_config.eos_token},
             {"add_generation_prompt", true},
         };
-
-        return this->add_request(request_id, tpl.RenderAsString(params).value(), sampling_params);
+        return this->add_request(request_id, this->chat_template->RenderAsString(params).value(), sampling_params);
     }
     GenerationHandle add_request(uint64_t request_id, std::string prompt, GenerationConfig sampling_params) {
-	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
 	std::cout << "Got prompt:" << prompt << std::endl;
-        std::cout << __FILE__ << ":" << __LINE__ << std::endl;
         if (sampling_params.eos_token_id < 0) {
             sampling_params.eos_token_id = m_tokenizer->get_eos_token_id();
         } else {
