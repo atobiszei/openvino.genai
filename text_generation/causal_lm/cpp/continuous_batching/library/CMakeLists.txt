@@ -53,7 +53,7 @@ function(ov_genai_build_jinja2cpp)
         FetchContent_Populate(jinja2cpp)
 
         set(BUILD_SHARED_LIBS OFF)
-        set(JINJA2CPP_INSTALL OFF CACHE BOOL "")
+	set(JINJA2CPP_INSTALL ON CACHE BOOL "")
         set(JINJA2CPP_CXX_STANDARD 17 CACHE STRING "")
         set(JINJA2CPP_BUILD_SHARED OFF CACHE BOOL "")
         set(JINJA2CPP_USE_REGEX "std" CACHE STRING "")
