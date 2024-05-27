@@ -45,9 +45,9 @@ set_target_properties(${TARGET_NAME} PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQ
 
 function(ov_genai_build_jinja2cpp)
     FetchContent_Declare(jinja2cpp
-        URL https://github.com/jinja2cpp/Jinja2Cpp/archive/a853f8e9f784de53b11973a47af0b20b0167f6f3.tar.gz 
-        URL_HASH SHA256=62b84663b5a6bc18622fbd1036e0e8f11a06e017c6065593122ca4707a91f1dc)
-
+	# ilya fork
+        URL https://github.com/ilya-lavrenov/Jinja2Cpp/archive/a5d002cbf44469775556daea14ba3ccdba1e365a.tar.gz
+        URL_HASH SHA256=5aa5378d9acf3c44dfb607fd7f16f48b17ffa6495c219957901e9191ffe28900)
     FetchContent_GetProperties(jinja2cpp)
     if(NOT jinja2cpp_POPULATED)
         FetchContent_Populate(jinja2cpp)
@@ -67,6 +67,12 @@ function(ov_genai_build_jinja2cpp)
         # It's enough to propagate to fmt, because fmt propagates to
         # jinja2cpp.
         target_compile_definitions(fmt PUBLIC $<TARGET_PROPERTY:openvino::runtime,INTERFACE_COMPILE_DEFINITIONS>)
+
+	install(TARGETS jinja2cpp
+	        RUNTIME DESTINATION bin
+	        LIBRARY DESTINATION lib
+	        ARCHIVE DESTINATION lib)
+
     endif()
 endfunction()
 
@@ -75,7 +81,7 @@ ov_genai_build_jinja2cpp()
 #need make_unique
 target_compile_features(${TARGET_NAME} PUBLIC cxx_std_17)
 
-target_link_libraries(${TARGET_NAME} PUBLIC openvino::runtime PRIVATE nlohmann_json::nlohmann_json jinja2cpp)
+target_link_libraries(${TARGET_NAME} PUBLIC openvino::runtime jinja2cpp PRIVATE nlohmann_json::nlohmann_json)
 
 #
 # Installation
