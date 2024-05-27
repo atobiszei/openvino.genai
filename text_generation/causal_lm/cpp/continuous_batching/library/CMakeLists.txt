@@ -81,7 +81,7 @@ ov_genai_build_jinja2cpp()
 #need make_unique
 target_compile_features(${TARGET_NAME} PUBLIC cxx_std_17)
 
-target_link_libraries(${TARGET_NAME} PUBLIC openvino::runtime jinja2cpp PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(${TARGET_NAME} PUBLIC openvino::runtime PRIVATE nlohmann_json::nlohmann_json jinja2cpp)
 
 #
 # Installation
