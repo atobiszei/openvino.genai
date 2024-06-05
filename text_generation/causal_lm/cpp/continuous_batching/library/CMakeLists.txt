@@ -47,7 +47,7 @@ function(ov_genai_build_jinja2cpp)
     FetchContent_Declare(jinja2cpp
 	    jinja2cpp
     GIT_REPOSITORY https://github.com/atobiszei/Jinja2Cpp.git
-    GIT_TAG origin/my_fork/templates_branch_rebase
+    GIT_TAG 5e88bf0be6ee2cbbb202c9e37bd6c57b0909b767
     GIT_SUBMODULES_RECURSE ON)
     FetchContent_GetProperties(jinja2cpp)
     FetchContent_MakeAvailable(jinja2cpp)
