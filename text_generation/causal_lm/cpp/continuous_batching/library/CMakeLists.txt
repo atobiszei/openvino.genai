@@ -47,7 +47,7 @@ function(ov_genai_build_jinja2cpp)
     FetchContent_Declare(jinja2cpp
 	    jinja2cpp
     GIT_REPOSITORY https://github.com/atobiszei/Jinja2Cpp.git
-    GIT_TAG ac9dfeb2db587c8c9491937e930ac7e31af454a5
+    GIT_TAG bdbdc1484af80f9ed6b8d8e3140f48487e248e2e
     GIT_SUBMODULES_RECURSE ON)
     FetchContent_GetProperties(jinja2cpp)
     FetchContent_MakeAvailable(jinja2cpp)
