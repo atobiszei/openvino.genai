@@ -20,8 +20,8 @@ find_package(OpenVINO REQUIRED COMPONENTS Runtime)
 function(ov_genai_build_jinja2cpp)
     FetchContent_Declare(jinja2cpp
 	    jinja2cpp
-    GIT_REPOSITORY https://github.com/jinja2cpp/Jinja2Cpp.git
-    GIT_TAG 9ae7e1fc45d707e1686dd425a154d30963801944
+    GIT_REPOSITORY https://github.com/atobiszei/Jinja2Cpp.git
+    GIT_TAG 98a69ee68502d7c186a93870512cf112fdd3fd17
     GIT_SUBMODULES_RECURSE ON)
     FetchContent_GetProperties(jinja2cpp)
     FetchContent_MakeAvailable(jinja2cpp)
