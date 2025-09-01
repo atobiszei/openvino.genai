@@ -100,6 +100,7 @@ int main(int argc, char* argv[]) try {
     std::cout << "TTFT: " << metrics.get_ttft().mean  << " ± " << metrics.get_ttft().std << " ms" << std::endl;
     std::cout << "TPOT: " << metrics.get_tpot().mean  << " ± " << metrics.get_tpot().std << " ms/token " << std::endl;
     std::cout << "Throughput: " << metrics.get_throughput().mean  << " ± " << metrics.get_throughput().std << " tokens/s" << std::endl;
+    std::cout << "Answer is: " << res << std::endl;
 
     return 0;
 } catch (const std::exception& error) {

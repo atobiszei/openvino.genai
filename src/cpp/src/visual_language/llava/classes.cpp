@@ -43,6 +43,8 @@ clip_image_f32 preprocess_clip_image_llava(const clip_image_u8& image, const Pro
     PRINT(cropped_image.nx);
     PRINT(cropped_image.ny);
     cropped_image.buf.resize(3 * crop_width * crop_height);
+    PRINT(cropped_image.buf.size());
+    PRINT(resized_image.buf.size());
 
     for (int y = 0; y < crop_height; ++y) {
         PRINT(y);
@@ -50,6 +52,11 @@ clip_image_f32 preprocess_clip_image_llava(const clip_image_u8& image, const Pro
             PRINT(x);
             for (int c = 0; c < 3; ++c) {
                 PRINT(c);
+                if (y > 330) {
+                        PRINT((y * crop_width + x) * 3 + c);
+                        PRINT(((start_y + y) * resized_image.nx + (start_x + x)) * 3 + c);
+                }
+
                 cropped_image.buf[(y * crop_width + x) * 3 + c] =
                     resized_image.buf[((start_y + y) * resized_image.nx + (start_x + x)) * 3 + c];
             }
