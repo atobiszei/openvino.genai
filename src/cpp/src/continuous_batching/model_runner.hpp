@@ -570,7 +570,42 @@ public:
             }
         }
         // return logits
-        return m_request.get_tensor("logits");
+            auto logits = m_request.get_tensor("logits");
+            static int logits_print_count = 3;
+            if (logits_print_count-- > 0) {
+                // Print logits contents
+                auto shape = logits.get_shape();
+                std::cout << "Logits shape: [";
+                for (size_t i = 0; i < shape.size(); ++i) {
+                    std::cout << shape[i];
+                    if (i < shape.size() - 1) std::cout << ", ";
+                }
+                std::cout << "]" << std::endl;
+
+                // Find and print top 10 largest logits values with their indices
+                auto* data = logits.data<float>();
+                size_t total_size = logits.get_size();
+                size_t top_k = std::min(static_cast<size_t>(10), total_size);
+
+                // Create vector of (value, index) pairs
+                std::vector<std::pair<float, size_t>> value_idx_pairs;
+                value_idx_pairs.reserve(total_size);
+                for (size_t i = 0; i < total_size; ++i) {
+                    value_idx_pairs.emplace_back(data[i], i);
+                }
+
+                // Partial sort to get top 10 largest values
+                std::partial_sort(value_idx_pairs.begin(), value_idx_pairs.begin() + top_k, value_idx_pairs.end(),
+                    [](const auto& a, const auto& b) { return a.first > b.first; });
+
+                std::cout << "Top 10 largest logits (id: value): ";
+                for (size_t i = 0; i < top_k; ++i) {
+                    std::cout << value_idx_pairs[i].second << ": " << value_idx_pairs[i].first;
+                    if (i < top_k - 1) std::cout << ", ";
+                }
+                std::cout << std::endl;
+            }
+        return logits;
     }
 
     void append_embeddings(const std::vector<SequenceGroup::Ptr> & sequence_groups, const Scheduler::Output& scheduler_output) {
