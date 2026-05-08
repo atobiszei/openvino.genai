@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 import os
@@ -15,11 +15,13 @@ class TestVisualLanguageChat:
     @pytest.mark.parametrize(
         "convert_model, download_test_content, questions",
         [
-            pytest.param("llava-1.5-7b-hf", "monalisa.jpg", 'Who drew this painting?\nWhen did the painter live?'),
-            pytest.param("llava-v1.6-mistral-7b-hf", "monalisa.jpg", 'Who drew this painting?\nWhen did the painter live?'),
-            pytest.param("InternVL2-1B", "monalisa.jpg", 'Who drew this painting?\nWhen did the painter live?'),
-            pytest.param("Qwen2-VL-2B-Instruct", "monalisa.jpg", 'Who drew this painting?\nWhen did the painter live?'),
-            pytest.param("tiny-random-minicpmv-2_6", "images/image.png", 'What is unusual on this image?\nGo on.')
+            pytest.param("llava-1.5-7b-hf", "monalisa.jpg", "Who drew this painting?\nWhen did the painter live?"),
+            pytest.param(
+                "llava-v1.6-mistral-7b-hf", "monalisa.jpg", "Who drew this painting?\nWhen did the painter live?"
+            ),
+            pytest.param("InternVL2-1B", "monalisa.jpg", "Who drew this painting?\nWhen did the painter live?"),
+            pytest.param("Qwen2-VL-2B-Instruct", "monalisa.jpg", "Who drew this painting?\nWhen did the painter live?"),
+            pytest.param("tiny-random-phi3-vision", "images/image.png", "What is unusual on this image?\nGo on."),
         ],
         indirect=["convert_model", "download_test_content"],
     )
@@ -48,7 +50,7 @@ class TestVisualLanguageChat:
     @pytest.mark.parametrize(
         "convert_model, questions",
         [
-            pytest.param("tiny-random-minicpmv-2_6", 'Describe the images?'),
+            pytest.param("tiny-random-phi3-vision", "Describe the images?"),
         ],
         indirect=["convert_model"],
     )
@@ -67,3 +69,26 @@ class TestVisualLanguageChat:
 
         # Compare results
         assert py_result.stdout == cpp_result.stdout, f"Results should match"
+
+    @pytest.mark.vlm
+    @pytest.mark.samples
+    @pytest.mark.parametrize(
+        "convert_model, download_test_content, questions",
+        [
+            pytest.param("Qwen2-VL-2B-Instruct", "monalisa.jpg", "Who drew this painting?\nWhen did the painter live?"),
+        ],
+        indirect=["convert_model", "download_test_content"],
+    )
+    def test_sample_visual_language_chat_prompt_lookup(self, convert_model, download_test_content, questions):
+        # Test visual_language_chat with prompt lookup decoding
+        py_script = SAMPLES_PY_DIR / "visual_language_chat/visual_language_chat.py"
+        py_command = [sys.executable, py_script, convert_model, download_test_content, "CPU", "true"]
+        py_result_lookup = run_sample(py_command, questions)
+
+        # Test visual_language_chat without prompt lookup decoding
+        py_script = SAMPLES_PY_DIR / "visual_language_chat/visual_language_chat.py"
+        py_command = [sys.executable, py_script, convert_model, download_test_content]
+        py_result = run_sample(py_command, questions)
+
+        # Compare results
+        assert py_result.stdout == py_result_lookup.stdout, f"Results should match"
